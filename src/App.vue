@@ -1,5 +1,6 @@
 <template>
   <div>
+    <AppNavbar></AppNavbar>
     <!-- Pantalla de selección de tareas -->
     <div v-if="!selectedTask">
       <h2>Seleccione una tarea</h2>
@@ -25,6 +26,7 @@
 import StroopTask from './components/StroopTask.vue';
 import ContinuousPerformanceTask from './components/ContinuousPerformanceTask.vue';
 import StopSignalTask from './components/StopSignalTask.vue';
+import AppNavbar from './components/AppNavbar.vue';
 
 export default {
   data() {
@@ -35,7 +37,8 @@ export default {
   components: {
     StroopTask,
     ContinuousPerformanceTask,
-    StopSignalTask
+    StopSignalTask,
+    AppNavbar
   },
   methods: {
     selectTask(task) {
@@ -46,6 +49,9 @@ export default {
 </script>
 
 <style scoped>
+body{
+  margin: 0px!important;
+}
 h2 {
   text-align: center;
 }
