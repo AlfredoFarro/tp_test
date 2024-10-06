@@ -1,6 +1,7 @@
 <template>
   <div>
     <AppNavbar></AppNavbar>
+
     <!-- Pantalla de selección de tareas -->
     <div v-if="!selectedTask">
       <h2>Seleccione una tarea</h2>
@@ -15,9 +16,12 @@
       <button @click="selectedTask = null">Volver</button>
 
       <!-- Mostrar la tarea correspondiente -->
-      <StroopTask v-if="selectedTask === 'stroop'" />
-      <ContinuousPerformanceTask v-if="selectedTask === 'cpt'" />
-      <StopSignalTask v-if="selectedTask === 'stop'" />
+      <StroopTask v-if="selectedTask === 'stroop'" @backToTaskSelection="selectedTask = null" />
+      <ContinuousPerformanceTask 
+        v-if="selectedTask === 'cpt'" 
+        @backToTaskSelection="selectedTask = null"  
+      />
+      <StopSignalTask v-if="selectedTask === 'stop'" @backToTaskSelection="selectedTask = null" />
     </div>
   </div>
 </template>
@@ -47,6 +51,7 @@ export default {
   }
 };
 </script>
+
 
 <style scoped>
 body{

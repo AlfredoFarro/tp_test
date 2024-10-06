@@ -46,8 +46,8 @@
         <h1>Tiempo agotado</h1>
         <p>Acertaste: {{ correctAnswers }} veces</p>
         <p>Errores: {{ wrongAnswers }} veces</p>
-        <p>Tiempo de respuesta promedio: {{ averageResponseTime }} segundos</p>
-        <button @click="resetGame">Reiniciar juego</button>
+        <p>Tiempo de respuesta promedio: {{ averageResponseTime }} ms</p>
+        <button @click="goToInstructions">Volver a la pantalla inicial</button>
       </div>
     </div>
   </div>
@@ -94,7 +94,7 @@ export default {
       this.startTime = new Date(); // Inicia el temporizador para la respuesta
     },
     checkAnswer(color) {
-      const responseTime = (new Date() - this.startTime) / 1000; // Calcula el tiempo en segundos
+      const responseTime = new Date() - this.startTime; // Calcula el tiempo en milisegundos
       this.responseTimes.push(responseTime); // Almacena el tiempo de respuesta
 
       if (color.code === this.displayedColor.code) {
@@ -134,12 +134,15 @@ export default {
       this.timer = 60; // Reinicia el temporizador a 60 segundos
       this.timeUp = false; // Reinicia el estado de tiempo
       this.generateRandomColor(); // Genera un nuevo color
+    },
+    goToInstructions() {
+      this.$emit('backToTaskSelection'); // Regresa a la pantalla de instrucciones
     }
   },
   computed: {
     averageResponseTime() {
       const totalResponseTime = this.responseTimes.reduce((acc, time) => acc + time, 0);
-      return this.responseTimes.length ? (totalResponseTime / this.responseTimes.length).toFixed(2) : 0;
+      return this.responseTimes.length ? (totalResponseTime / this.responseTimes.length).toFixed(0) : 0;
     }
   },
   beforeUnmount() {
@@ -147,6 +150,7 @@ export default {
   }
 };
 </script>
+
 
 <style scoped>
 .stroop-task {

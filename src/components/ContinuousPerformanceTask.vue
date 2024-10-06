@@ -32,10 +32,10 @@
       <!-- Resultado final -->
       <div v-if="timeUp" class="result-screen">
         <h1>Resultados</h1>
-        <p>Aciertos: {{ correctAnswers }}</p>
-        <p>Errores: {{ incorrectAnswers }}</p>
+        <p>Errores de omisión: {{ omissionErrors }}</p>
+        <p>Errores de comisión: {{ commissionErrors }}</p>
         <p v-if="reactionTimes.length > 0">Tiempo de reacción promedio: {{ averageReactionTime }} ms</p>
-        <button @click="resetGame">Reiniciar juego</button>
+        <button @click="goToTaskSelection">Volver a seleccionar tarea</button>
       </div>
     </div>
   </div>
@@ -45,64 +45,71 @@
 export default {
   data() {
     return {
-      taskStarted: false,  // Controla si la tarea ha comenzado
-      letters: 'ABCDEFGHIJ'.split(''),  // Lista de letras de A a J
-      targetLetter: '',  // Letra objetivo
-      currentLetter: '',  // Letra actual que se muestra
-      correctAnswers: 0,  // Contador de respuestas correctas
-      incorrectAnswers: 0,  // Contador de errores
-      reactionTimes: [],  // Arreglo de tiempos de reacción
-      averageReactionTime: null,  // Tiempo de reacción promedio
-      timer: 60,  // Temporizador de 60 segundos
-      timeUp: false,  // Controla si el tiempo ha terminado
-      intervalId: null,  // Intervalo para cambiar letras
-      timerInterval: null,  // Intervalo para el temporizador
-      showErrorScreen: false,  // Controla la pantalla de error
-      letterStartTime: null,  // Tiempo en que la letra actual apareció
+      taskStarted: false,
+      letters: 'ABCDEFGHIJ'.split(''),
+      targetLetter: '',
+      currentLetter: '',
+      commissionErrors: 0,  // Errores de comisión
+      omissionErrors: 0,  // Errores de omisión
+      reactionTimes: [],
+      averageReactionTime: null,
+      timer: 60,
+      timeUp: false,
+      intervalId: null,
+      timerInterval: null,
+      showErrorScreen: false,
+      letterStartTime: null,
+      responded: false,  // Indica si se respondió al estímulo
     };
   },
   methods: {
-    // Iniciar la tarea
     startTask() {
-      this.taskStarted = true;  // Marca que la tarea ha comenzado
+      this.taskStarted = true;
       this.startTimer();
       this.startLetterChange();
-      this.generateTargetLetter(); // Genera la letra objetivo inicial
+      this.generateTargetLetter();
       window.addEventListener('keydown', this.handleKeyPress);
     },
     startLetterChange() {
       this.intervalId = setInterval(() => {
         this.generateRandomLetter();
-      }, 1000);  // Cambia la letra cada segundo
+        this.checkOmissionError();  // Verifica si hubo un error de omisión
+      }, 1000);
     },
     generateRandomLetter() {
       const randomIndex = Math.floor(Math.random() * this.letters.length);
       this.currentLetter = this.letters[randomIndex];
-      this.letterStartTime = Date.now();  // Registra el momento en que aparece la letra
+      this.letterStartTime = Date.now();
+      this.responded = false;  // Reinicia la respuesta para la nueva letra
     },
     generateTargetLetter() {
       const randomIndex = Math.floor(Math.random() * this.letters.length);
-      this.targetLetter = this.letters[randomIndex]; // Cambia la letra objetivo
+      this.targetLetter = this.letters[randomIndex];
     },
     handleKeyPress(event) {
-      if (event.code === 'Space' && !this.timeUp) {
+      if (event.code === 'Space' && !this.timeUp && !this.responded) {
         this.checkAnswer();
+        this.responded = true;
       }
     },
     checkAnswer() {
       const currentTime = Date.now();
-      const reactionTime = currentTime - this.letterStartTime;  // Calcula el tiempo de reacción
+      const reactionTime = currentTime - this.letterStartTime;
 
       if (this.currentLetter === this.targetLetter) {
-        this.correctAnswers++;  // Incrementa el contador de aciertos
-        this.reactionTimes.push(reactionTime);  // Agrega el tiempo de reacción al arreglo
-        this.generateTargetLetter(); // Cambia la letra objetivo al acertar
+        this.reactionTimes.push(reactionTime);
+        this.generateTargetLetter();
       } else {
-        this.incorrectAnswers++;  // Incrementa el contador de errores
-        this.showErrorScreen = true;  // Muestra la pantalla de error
+        this.commissionErrors++;
+        this.showErrorScreen = true;
         setTimeout(() => {
           this.showErrorScreen = false;
-        }, 1000);  // La pantalla de error se muestra durante 1 segundo
+        }, 1000);
+      }
+    },
+    checkOmissionError() {
+      if (!this.responded && this.currentLetter === this.targetLetter) {
+        this.omissionErrors++;
       }
     },
     startTimer() {
@@ -110,31 +117,22 @@ export default {
         if (this.timer > 0) {
           this.timer--;
         } else {
-          this.endTask();  // Finaliza la tarea cuando el tiempo se agote
+          this.endTask();
         }
       }, 1000);
     },
     endTask() {
-      this.timeUp = true;  // Marca que el tiempo ha terminado
-      clearInterval(this.intervalId);  // Detiene el cambio de letras
-      clearInterval(this.timerInterval);  // Detiene el temporizador
+      this.timeUp = true;
+      clearInterval(this.intervalId);
+      clearInterval(this.timerInterval);
 
-      // Calcular tiempo de reacción promedio
       if (this.reactionTimes.length > 0) {
         const totalReactionTime = this.reactionTimes.reduce((acc, time) => acc + time, 0);
         this.averageReactionTime = (totalReactionTime / this.reactionTimes.length).toFixed(2);
       }
     },
-    resetGame() {
-      this.taskStarted = false;  // Reinicia el estado de inicio
-      this.correctAnswers = 0;  // Reinicia el contador de aciertos
-      this.incorrectAnswers = 0;  // Reinicia el contador de errores
-      this.reactionTimes = [];  // Reinicia los tiempos de reacción
-      this.averageReactionTime = null;  // Reinicia el promedio de tiempos de reacción
-      this.timer = 60;  // Reinicia el temporizador a 60 segundos
-      this.timeUp = false;  // Reinicia el estado de tiempo
-      clearInterval(this.intervalId);  // Detiene el cambio de letras
-      clearInterval(this.timerInterval);  // Detiene el temporizador
+    goToTaskSelection() {
+      this.$emit('backToTaskSelection');
     }
   }
 };
@@ -147,14 +145,6 @@ export default {
 
 h1 {
   font-size: 72px;
-}
-
-.correct {
-  color: green;
-}
-
-.wrong {
-  color: red;
 }
 
 /* Pantalla de instrucciones */
@@ -189,7 +179,7 @@ h1 {
 
 /* Temporizador */
 .timer {
-  font-size: 24px; /* Tamaño del texto del temporizador */
+  font-size: 24px;
   margin: 20px 0;
 }
 
@@ -224,7 +214,7 @@ h1 {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.8); /* Fondo oscuro */
+  background-color: rgba(0, 0, 0, 0.8);
   color: white;
   display: flex;
   flex-direction: column;

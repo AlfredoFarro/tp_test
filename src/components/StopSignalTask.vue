@@ -18,18 +18,23 @@
     <!-- Tarea principal -->
     <div v-if="taskStarted">
       <h2>Presiona la tecla de flecha correspondiente</h2>
-      <div class="arrow-container">
-        <span v-if="showArrow && currentDirection === 'left'" class="arrow">⬅️</span>
-        <span v-if="showArrow && currentDirection === 'right'" class="arrow">➡️</span>
-      </div>
+      <div class="game-container">
+        <div class="arrow-container">
+          <span v-if="showArrow && currentDirection === 'left'" class="arrow">⬅️</span>
+          <span v-if="showArrow && currentDirection === 'right'" class="arrow">➡️</span>
+          <!-- Mostrar el símbolo de espera en la misma posición que las flechas -->
+          <span v-if="showWaitingSymbol" class="waiting-symbol">🔄</span>
+        </div>
 
-      <p v-if="showResult" :class="result === 'correct' ? 'correct' : result === 'wrong' ? 'wrong' : 'missed'">
-        {{ result === 'correct' ? 'Correcto' : result === 'wrong' ? 'Incorrecto' : 'No presionaste :(' }}
-      </p>
+        <!-- Texto de resultado -->
+        <p v-if="showResult" :class="result === 'correct' ? 'correct' : result === 'wrong' ? 'wrong' : 'missed'" class="result-text">
+          {{ result === 'correct' ? 'Correcto' : result === 'wrong' ? 'Incorrecto' : 'No presionaste :(' }}
+        </p>
 
-      <!-- Temporizador -->
-      <div class="timer">
-        Tiempo restante: {{ timer }} segundos
+        <!-- Temporizador -->
+        <div class="timer">
+          Tiempo restante: {{ timer }} segundos
+        </div>
       </div>
 
       <!-- Resultado final -->
@@ -38,8 +43,8 @@
         <p>Acertaste: {{ correctAnswers }} veces</p>
         <p>Errores: {{ wrongAnswers }} veces</p>
         <p>Flechas omitidas: {{ missedArrows }} veces</p>
-        <p>Tiempo de reacción promedio: {{ averageResponseTime }} segundos</p>
-        <button @click="resetGame">Reiniciar juego</button>
+        <p>Tiempo de reacción promedio: {{ averageResponseTime }} ms</p>
+        <button @click="goToTaskSelection">Volver a la selección de tareas</button>
       </div>
     </div>
   </div>
@@ -49,53 +54,59 @@
 export default {
   data() {
     return {
-      taskStarted: false, // Controla si la tarea ha comenzado
-      directions: ['left', 'right'], // Lista de direcciones
-      currentDirection: '', // Dirección actual (flecha izquierda o derecha)
-      result: null, // Resultado (correcto, incorrecto o omitido)
+      taskStarted: false,
+      directions: ['left', 'right'],
+      currentDirection: '',
+      result: null,
       intervalId: null,
-      timer: 60, // Temporizador de 60 segundos
+      timer: 60,
       timerInterval: null,
-      correctAnswers: 0, // Contador de respuestas correctas
-      wrongAnswers: 0, // Contador de respuestas incorrectas
-      missedArrows: 0, // Contador de flechas omitidas
-      timeUp: false, // Controla si el tiempo ha terminado
-      showArrow: false, // Controla la visibilidad de la flecha
-      showResult: false, // Controla la visibilidad del resultado
-      hasAnswered: false, // Controla si se ha acertado la flecha actual
-      responseTimes: [], // Almacena los tiempos de respuesta
-      startTime: null, // Momento en que aparece una nueva flecha
+      correctAnswers: 0,
+      wrongAnswers: 0,
+      missedArrows: 0,
+      timeUp: false,
+      showArrow: false,
+      showResult: false,
+      hasAnswered: false,
+      responseTimes: [],
+      startTime: null,
+      showWaitingSymbol: false, // Controla la visibilidad del símbolo de espera
     };
   },
   mounted() {
-    window.addEventListener('keydown', this.handleKeyPress); // Añadir el evento de tecla al montar
+    window.addEventListener('keydown', this.handleKeyPress);
   },
   beforeUnmount() {
-    window.removeEventListener('keydown', this.handleKeyPress); // Limpiar el evento al desmontar
-    clearInterval(this.intervalId); // Limpiar el intervalo de flechas
-    clearInterval(this.timerInterval); // Limpiar el intervalo del temporizador
+    window.removeEventListener('keydown', this.handleKeyPress);
+    clearInterval(this.intervalId);
+    clearInterval(this.timerInterval);
   },
   methods: {
     startTask() {
-      this.resetGame(); // Reinicia el juego y variables
-      this.taskStarted = true; // Marca que la tarea ha comenzado
-      this.startTimer(); // Inicia el temporizador
-      this.showNextArrow(); // Iniciar el ciclo de flechas de inmediato
+      this.resetGame();
+      this.taskStarted = true;
+      this.startTimer();
+      this.showNextArrow();
     },
 
     showNextArrow() {
-      // Mostrar la flecha inmediatamente
+      if (this.timeUp) return; // Detener si el tiempo ha terminado
+
       this.generateRandomDirection();
       this.showArrow = true;
-      this.startTime = new Date(); // Inicia el temporizador para la respuesta
-      this.result = null; // Reiniciar el resultado de la respuesta
-      this.hasAnswered = false; // Reiniciar el estado de la respuesta
+      this.startTime = new Date();
+      this.result = null;
+      this.hasAnswered = false;
 
       // Mostrar la flecha por 1 segundo, luego ocultarla y esperar 1 segundo más
       setTimeout(() => {
-        this.showArrow = false; // Ocultar flecha después de 1 segundo
+        this.showArrow = false;
+
+        // Indicador de espera durante 1 segundo
+        this.showWaitingSymbol = true;
         setTimeout(() => {
-          // Mostrar el resultado si no se ha presionado una tecla
+          this.showWaitingSymbol = false;
+
           if (!this.hasAnswered) {
             this.result = 'missed';
             this.missedArrows++;
@@ -108,9 +119,9 @@ export default {
             if (!this.timeUp) {
               this.showNextArrow(); // Repetir el ciclo
             }
-          }, 1000); // Mostrar el resultado durante 1 segundo
-        }, 1000); // Esperar 1 segundo con la flecha oculta antes de mostrar el resultado
-      }, 1000); // Mostrar la flecha durante 1 segundo
+          }, 1000);
+        }, 1000); // Espera 1 segundo antes de mostrar el resultado
+      }, 1000);
     },
 
     generateRandomDirection() {
@@ -120,7 +131,7 @@ export default {
 
     handleKeyPress(event) {
       if (!this.timeUp && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
-        const responseTime = (new Date() - this.startTime) / 1000; // Calcula el tiempo de respuesta
+        const responseTime = (new Date() - this.startTime); // Calcula el tiempo de respuesta en ms
 
         if (
           (event.key === 'ArrowLeft' && this.currentDirection === 'left') ||
@@ -130,12 +141,12 @@ export default {
             this.result = 'correct';
             this.correctAnswers++;
             this.responseTimes.push(responseTime);
-            this.hasAnswered = true; // Marca que se ha respondido
+            this.hasAnswered = true;
           }
         } else {
           this.result = 'wrong';
           this.wrongAnswers++;
-          this.hasAnswered = true; // Marca que se ha respondido
+          this.hasAnswered = true;
         }
       }
     },
@@ -143,32 +154,36 @@ export default {
     startTimer() {
       this.timerInterval = setInterval(() => {
         if (this.timer > 0) {
-          this.timer--; // Decrementa el temporizador de 1 en 1
+          this.timer--;
         } else {
-          this.timeUp = true; // Marca que el tiempo ha terminado
-          clearInterval(this.timerInterval); // Detiene el temporizador
-          clearInterval(this.intervalId); // Detiene el intervalo de flechas
+          this.timeUp = true;
+          clearInterval(this.timerInterval);
         }
       }, 1000);
     },
 
     resetGame() {
-      this.correctAnswers = 0; // Reinicia el contador de aciertos
-      this.wrongAnswers = 0; // Reinicia el contador de errores
-      this.missedArrows = 0; // Reinicia el contador de flechas omitidas
-      this.responseTimes = []; // Reinicia los tiempos de respuesta
-      this.timer = 60; // Reinicia el temporizador a 60 segundos
-      this.timeUp = false; // Reinicia el estado de tiempo
-      this.showArrow = false; // Oculta las flechas al reiniciar
-      this.showResult = false; // Oculta el resultado al reiniciar
-    }
+      this.correctAnswers = 0;
+      this.wrongAnswers = 0;
+      this.missedArrows = 0;
+      this.responseTimes = [];
+      this.timer = 60;
+      this.timeUp = false;
+      this.showArrow = false;
+      this.showResult = false;
+      this.showWaitingSymbol = false;
+    },
+
+    goToTaskSelection() {
+      this.$emit('backToTaskSelection'); // Regresa a la pantalla de selección de tareas
+    },
   },
   computed: {
     averageResponseTime() {
       const totalResponseTime = this.responseTimes.reduce((acc, time) => acc + time, 0);
-      return this.responseTimes.length ? (totalResponseTime / this.responseTimes.length).toFixed(2) : 0;
-    }
-  }
+      return this.responseTimes.length ? (totalResponseTime / this.responseTimes.length).toFixed(0) : 0;
+    },
+  },
 };
 </script>
 
@@ -207,9 +222,29 @@ export default {
   background-color: #45a049;
 }
 
+/* Contenedor de juego */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative; /* Permite el uso de posiciones absolutas dentro */
+  height: 200px; /* Altura fija para evitar el movimiento del temporizador */
+}
+
 /* Contenedor de flechas */
 .arrow-container {
   font-size: 72px;
+  position: absolute; /* Permite el posicionamiento absoluto de las flechas y el símbolo */
+  top: 0; /* Ajusta esto según sea necesario para centrarlo verticalmente */
+  left: 50%; /* Centrado horizontalmente */
+  transform: translateX(-50%); /* Ajuste para centrar */
+}
+
+/* Texto de resultado */
+.result-text {
+  font-size: 24px;
+  margin-bottom: 20px; /* Espacio fijo para evitar el movimiento */
 }
 
 /* Resultados */
@@ -228,7 +263,10 @@ export default {
 /* Temporizador */
 .timer {
   font-size: 24px;
-  margin: 20px 0;
+  position: absolute; /* Mantiene el temporizador en la misma posición */
+  bottom: 20px; /* Espacio desde el fondo */
+  left: 50%; /* Centrado horizontalmente */
+  transform: translateX(-50%); /* Ajuste para centrar */
 }
 
 /* Pantalla de resultado final */
@@ -238,8 +276,7 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,
-  0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.8);
   color: white;
   display: flex;
   flex-direction: column;
@@ -267,5 +304,15 @@ export default {
 
 .result-screen button:hover {
   background-color: #f0f0f0;
+}
+
+/* Símbolo de espera */
+.waiting-symbol {
+  font-size: 72px;
+  color: #aaa;
+  position: absolute; /* Para que esté en la misma posición que las flechas */
+  top: 0; /* Ajusta esto según sea necesario para centrarlo verticalmente */
+  left: 50%; /* Centrado horizontalmente */
+  transform: translateX(-50%); /* Ajuste para centrar */
 }
 </style>
