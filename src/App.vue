@@ -2,8 +2,15 @@
   <div>
     <AppNavbar></AppNavbar>
 
+    <!-- Pantalla de introducción: Pregunta sobre TDAH -->
+    <div v-if="introScreen">
+      <h2>¿Tienes TDAH?</h2>
+      <button @click="handleTdahResponse(true)">Sí</button>
+      <button @click="handleTdahResponse(false)">No</button>
+    </div>
+
     <!-- Pantalla de selección de tareas -->
-    <div v-if="!selectedTask">
+    <div v-else-if="!selectedTask">
       <h2>Seleccione una tarea</h2>
       <button @click="selectTask('stroop')">Stroop Task</button>
       <button @click="selectTask('cpt')">Continuous Performance Task</button>
@@ -35,6 +42,7 @@ import AppNavbar from './components/AppNavbar.vue';
 export default {
   data() {
     return {
+      introScreen: true, // Controla si se muestra la pantalla inicial sobre TDAH
       selectedTask: null // Controla qué tarea está seleccionada
     };
   },
@@ -45,6 +53,11 @@ export default {
     AppNavbar
   },
   methods: {
+    handleTdahResponse(response) {
+      this.introScreen = false; // Oculta la pantalla de TDAH después de seleccionar una opción
+      // Puedes guardar la respuesta del usuario aquí si la necesitas
+      console.log("Respuesta sobre TDAH:", response);
+    },
     selectTask(task) {
       this.selectedTask = task; // Asigna la tarea seleccionada
     }
@@ -52,11 +65,11 @@ export default {
 };
 </script>
 
-
 <style scoped>
-body{
-  margin: 0px!important;
+body {
+  margin: 0px !important;
 }
+
 h2 {
   text-align: center;
 }
@@ -73,5 +86,3 @@ button:hover {
   background-color: #f0f0f0;
 }
 </style>
-
-

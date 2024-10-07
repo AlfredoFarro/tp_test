@@ -125,10 +125,12 @@ export default {
       this.timeUp = true;
       clearInterval(this.intervalId);
       clearInterval(this.timerInterval);
-
+        
       if (this.reactionTimes.length > 0) {
         const totalReactionTime = this.reactionTimes.reduce((acc, time) => acc + time, 0);
         this.averageReactionTime = (totalReactionTime / this.reactionTimes.length).toFixed(2);
+      } else {
+        this.averageReactionTime = "No hubo respuestas correctas";
       }
     },
     goToTaskSelection() {
